@@ -1,8 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-
-int NOP=0;
-int NOD=0;
 
 typedef struct pat_id{
 	char username[50];
@@ -18,6 +16,7 @@ typedef struct patient{
 } patient;
 
 void register_patient();
+void authenticate_patient();
 
 void init_patient()
 {
@@ -34,17 +33,19 @@ void init_patient()
 	}
 	else if (x=='Y')
 	{
-		//authenticate_patient();
+		authenticate_patient();
 	}
 }
 
 void register_patient()
 {
 	int flag=0;
+	patient x;
+
 	do{
-		patient x;
+		flag=0;
 		printf("PLEASE ENTER YOUR PERSONAL DETAILS -\n");
-		printf("  1. NAME : ");
+		printf("  1. FIRST NAME : ");
 		scanf("%s",x.name);
 		printf("  2. USERNAME : ");
 		scanf("%s",x.username);
@@ -55,48 +56,87 @@ void register_patient()
 		printf("  5. DOB (dd-mm-yyyy) : ");
 		scanf("%s",x.DOB);
 
-		if (NOP==0)
-		{
-			flag=1;
-			NOP++;
-			pat_id temp;
-			strcpy(temp.username,x.username);
-			strcpy(temp.password,temp.password);
-			FILE *ptr;
-			ptr=fopen("patient-log.bin","ab+");
-			fseek(ptr,0,SEEK_END);
-			fwrite(&temp,sizeof(struct pat_id),1,ptr);
-			fclose(ptr);
-		}
-		else
-		{
 				FILE *ptr;
 				ptr=fopen("patient-log.bin","ab+");
-				for (int i=0;i<NOP;i++)
+				fseek(ptr,0,SEEK_SET);
+
+				for (int i=0;;i++)
 				{
+
+					if (feof(ptr))break;
+
 					pat_id check;
 					fread(&check,sizeof(struct pat_id),1,ptr);
 
-					//printf("%d %s\n",i,check.username);
-
 					if (strcmp(check.username,x.username)==0)
 					{
-						printf("THE USERNAME ALREADY EXISTS, PLEASE SELECT SOME OTHER USERNAME.\n");
-					}
-					else
-					{
+						printf("\nTHE USERNAME ALREADY EXISTS, PLEASE SELECT SOME OTHER USERNAME.\n\n");
 						flag=1;
-						NOP++;
-						pat_id temp;
-						strcpy(temp.username,x.username);
-						strcpy(temp.password,temp.password);
-						fseek(ptr,0,SEEK_END);
-						fwrite(&temp,sizeof(struct pat_id),1,ptr);
+						break;
 					}
+					
 				}
 				fclose(ptr);
+	}while(flag);
+
+	FILE* ptr2;
+	ptr2=fopen("patient-log.bin","ab+");
+	pat_id temp;
+	strcpy(temp.username,x.username);
+	strcpy(temp.password,x.password);
+	fseek(ptr2,0,SEEK_END);
+	fwrite(&temp,sizeof(struct pat_id),1,ptr2);
+	fclose(ptr2);
+
+	printf("\nWELCOME NEW USER! YOU ARE NOW LOGGED IN \n");
+
+	FILE* ptr3;
+	char h[100]="patients/";
+	strcat(h,x.username);
+	strcat(h,".bin");
+
+	ptr3=fopen(h,"ab+");
+
+	fwrite(&x,sizeof(struct patient),1,ptr3);
+	fclose(ptr3);
+
+}
+
+void authenticate_patient()
+{
+	printf("ENTER YOUR USERNAME AND PASSWORD TO LOG-IN : \n");
+	
+	pat_id check;
+	int flag=0;
+
+	do{
+		pat_id x;
+		printf("  USERNAME : ");
+		scanf("%s",x.username);
+		printf("  PASSWORD : ");
+		scanf("%s",x.password);
+
+		FILE* ptr;
+		ptr=fopen("patient-log.bin","rb");
+		fseek(ptr,0,SEEK_SET);
+
+		for (int i=0;;i++)
+		{
+			if (feof(ptr))break;
+
+			fread(&check,sizeof(struct pat_id),1,ptr);
+
+			if ((strcmp(x.username,check.username)==0) && (strcmp(x.password,check.password)==0))
+				flag=1;
 		}
-	}while(!flag);
+		fclose(ptr);
+
+		if (flag==0)
+			printf("  INVALID LOGIN, PLEASE TRY AGAIN\n\n");
+
+	}while (!flag);
+
+	printf("YOU HAVE SUCCESSFULLY LOGGED-IN ! \n");
 }
 
 int main()
@@ -117,5 +157,11 @@ int main()
 	{
 		init_patient();
 	}
+
+	else if (choice==2)
+	{
+		//init_doctor();
+	}
+
 	return 0;
 }
