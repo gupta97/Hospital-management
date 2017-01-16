@@ -27,8 +27,54 @@ typedef struct doctor{
 	char password[50];
 } doctor;
 
+typedef struct status{
+	double temperature;
+	double bp;
+} status;
+
 void register_patient();
 void authenticate_patient();
+void reg_pat_with_doc(char username[100]);
+
+void print_doctors()
+{
+	printf("LIST OF REGISTERED DOCTORS\n");
+	FILE* ptr=fopen("doctor-log.bin","rb");
+	fseek(ptr,0,SEEK_SET);
+	doc_id temp;
+	while (1)
+	{
+		fread(&temp,sizeof(doc_id),1,ptr);
+		if (feof(ptr))break;
+
+		fseek(ptr,-1*sizeof(doc_id),SEEK_CUR);
+		fread(&temp,sizeof(doc_id),1,ptr);
+
+		printf("%s\n",temp.username);
+	}
+	fclose(ptr);
+	printf("\n");
+}
+
+void print_patients()
+{
+	printf("LIST OF REGISTERED PATIENTS\n");
+	FILE* ptr=fopen("patient-log.bin","rb");
+	fseek(ptr,0,SEEK_SET);
+	pat_id temp;
+	while (1)
+	{
+		fread(&temp,sizeof(pat_id),1,ptr);
+		if (feof(ptr))break;
+
+		fseek(ptr,-1*sizeof(pat_id),SEEK_CUR);
+		fread(&temp,sizeof(pat_id),1,ptr);
+
+		printf("%s\n",temp.username);
+	}
+	fclose(ptr);
+	printf("\n");
+}
 
 void init_patient()
 {
@@ -93,11 +139,11 @@ void register_patient()
 
 	FILE* ptr2;
 	ptr2=fopen("patient-log.bin","ab+");
-	pat_id temp;
-	strcpy(temp.username,x.username);
-	strcpy(temp.password,x.password);
+	pat_id temp1;
+	strcpy(temp1.username,x.username);
+	strcpy(temp1.password,x.password);
 	fseek(ptr2,0,SEEK_END);
-	fwrite(&temp,sizeof(struct pat_id),1,ptr2);
+	fwrite(&temp1,sizeof(struct pat_id),1,ptr2);
 	fclose(ptr2);
 
 	printf("\nWELCOME NEW USER! YOU ARE NOW LOGGED IN \n");
@@ -112,6 +158,102 @@ void register_patient()
 	fwrite(&x,sizeof(struct patient),1,ptr3);
 	fclose(ptr3);
 
+	printf("\nYOU WILL HAVE TO REGISTER UNDER A DOCTOR TO PROCEED\n");
+	printf("HERE IS A LIST OF REGISTERED DOCTORS\n");
+	printf("%5s%20s%20s\n\n","SR NO","NAME","USERNAME");
+	
+	FILE* ptr=fopen("doctor-log.bin","rb");
+	fseek(ptr,0,SEEK_SET);
+	doc_id temp;
+	for (int i=1;;i++)
+	{
+		fread(&temp,sizeof(doc_id),1,ptr);
+		if (feof(ptr))break;
+
+		fseek(ptr,-1*sizeof(doc_id),SEEK_CUR);
+		fread(&temp,sizeof(doc_id),1,ptr);
+
+		char h[100]="doctors/";
+		strcat(h,temp.username);
+		strcat(h,".bin");
+		
+		FILE* ptr2=fopen(h,"rb");
+
+		doctor temp2;
+		fread(&temp2,sizeof(doctor),1,ptr2);
+		printf("%5d%20s%20s\n",i,temp2.name,temp.username);
+
+		fclose(ptr2);
+	}
+	fclose(ptr);
+	reg_pat_with_doc(x.username);
+
+	ptr=fopen(h,"ab+");
+	status val;
+
+	printf("\nENTER YOUR CURRENT HEALTH STATUS\n1. BODY-TEMPERATURE (fahrenheit) : ");
+	scanf("%lf",&val.temperature);
+	printf("\n2. BLOOD PRESSURE (mm) : ");
+	scanf("%lf",&val.bp);
+
+	fseek(ptr,0,SEEK_END);
+	fwrite(&val,sizeof(struct status),1,ptr);
+
+	fclose(ptr);
+}
+
+void reg_pat_with_doc(char username[100])
+{
+	printf("\nPLEASE ENTER THE USERNAME OF THE DOCTOR YOU WANT TO REGISTER WITH : \n");
+	char inp[100];
+	int flag=0;
+	do{
+		scanf("%s",inp);
+		
+		FILE* ptr=fopen("doctor-log.bin","rb");
+		fseek(ptr,0,SEEK_SET);
+		doc_id temp;
+		while (1)
+		{
+			fread(&temp,sizeof(doc_id),1,ptr);
+			if (feof(ptr))break;
+
+			fseek(ptr,-1*sizeof(doc_id),SEEK_CUR);
+			fread(&temp,sizeof(doc_id),1,ptr);
+
+			if (strcmp(temp.username,inp)==0)
+			{
+				flag=1;
+				break;
+			}
+		}
+		fclose(ptr);
+
+		if (flag==0)
+		{
+			printf("\nINVALID USERNAME ENTERED, PLEASE TRY AGAIN\n");
+			printf("ENTER USER-NAME\n");
+		}
+	
+	} while (!flag);
+
+	char temp[100]="doctors/";
+	strcat(temp,inp);
+	strcat(temp,".bin");
+
+	FILE* ptr=fopen(temp,"ab+");
+	fseek(ptr,0,SEEK_END);
+	fwrite(&username,sizeof(char)*100,1,ptr);
+	fclose(ptr);
+
+	char temp2[100]="patients/";
+	strcat(temp2,username);
+	strcat(temp2,".bin");
+
+	ptr=fopen(temp2,"ab+");
+
+	fwrite(&inp,sizeof(char)*100,1,ptr);
+	fclose(ptr);
 }
 
 void authenticate_patient()
@@ -276,15 +418,19 @@ int main()
 {
 	printf("HI!\nWELCOME TO THE ONLINE PATIENT MONITORING SYSTEM\n\n");
 
+	print_doctors();
+	print_patients();
+
 	double choice;
 	do{
 		printf("PLEASE ENTER YOUR CHOICE\n");
 		printf("  1. PATIENT (ENTER 1)\n");
 		printf("  2. DOCTOR (ENTER 2)\n");
+		printf("  3. EXIT\n");
 		printf("  ENTER CHOICE : ");
 		scanf("%lf",&choice);
 		printf("\n");
-	}while(choice!=1 && choice!=2);
+	}while(choice!=1 && choice!=2 && choice!=3);
 
 	if (choice==1)
 	{
