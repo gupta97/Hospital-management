@@ -169,7 +169,7 @@ void register_patient()
 	fwrite(&temp1,sizeof(struct pat_id),1,ptr2);
 	fclose(ptr2);
 
-	printf("\nWELCOME NEW USER! YOU ARE NOW LOGGED IN \n");
+	printf("\nWELCOME NEW USER! YOU ARE NOW LOGGED IN !\n");
 
 	FILE* ptr3;
 	char h[100]="patients/";
@@ -257,7 +257,7 @@ void register_patient()
 		fclose(ptr);
 
 		printf("\nYOUR HEALTH STATUS : \n");
-		printf("\n  1. BODY TEMPERATURE : %lf\n  2. BLOOD PRESSURE : %lf\n",temp.temperature,temp.bp);
+		printf("\n  1. BODY TEMPERATURE : %lf\n  2. BLOOD PRESSURE : %lf\n\n",temp.temperature,temp.bp);
 	}
 
 	else if (choice[0]=='2')
@@ -278,7 +278,7 @@ void register_patient()
 		doctor temp2;
 		fread(&temp2,sizeof(struct doctor),1,ptr);
 		printf("\nYOUR DOCTOR IS : %s\n",temp2.name);
-		printf("\nYOU CAN CONTACT HIM VIA E-MAIL : %s\n",temp2.email);
+		printf("\nYOU CAN CONTACT HIM VIA E-MAIL : %s\n\n",temp2.email);
 
 		fclose(ptr);
 
@@ -286,7 +286,7 @@ void register_patient()
 
 	else if (choice[0]=='3')
 	{
-		printf("\nYOU HAVE SUCCESSFULLY LOGGED OUT!\n\n");
+		printf("\nYOU HAVE SUCCESSFULLY LOGGED-IN OUT!\n\n");
 	}
 }
 
@@ -326,6 +326,7 @@ void reg_pat_with_doc(char username[100])
 			printf("\nENTER USER-NAME\n");
 		}
 	
+		fclose(ptr);
 	} while (!flag);
 
 	char temp[100]="doctors/";
@@ -340,7 +341,7 @@ void reg_pat_with_doc(char username[100])
 	regpat ddd;
 	fseek(ptr,sizeof(regpat)*-1,SEEK_END);
 	fread(&ddd,sizeof(regpat),1,ptr);
-	printf("~~%s\n",ddd.name);
+	//printf("~~%s\n",ddd.name);
 
 	char temp2[100]="patients/";
 	strcat(temp2,username);
@@ -427,7 +428,7 @@ void authenticate_patient()
 		fclose(ptr);
 
 		printf("\nYOUR HEALTH STATUS : \n");
-		printf("\n  1. BODY TEMPERATURE : %lf\n  2. BLOOD PRESSURE : %lf\n",temp.temperature,temp.bp);
+		printf("\n  1. BODY TEMPERATURE : %lf\n  2. BLOOD PRESSURE : %lf\n\n",temp.temperature,temp.bp);
 	}
 
 	else if (choice[0]=='2')
@@ -448,7 +449,7 @@ void authenticate_patient()
 		doctor temp2;
 		fread(&temp2,sizeof(struct doctor),1,ptr);
 		printf("\nYOUR DOCTOR IS : %s\n",temp2.name);
-		printf("\nYOU CAN CONTACT HIM VIA E-MAIL : %s\n",temp2.email);
+		printf("\nYOU CAN CONTACT HIM VIA E-MAIL : %s\n\n",temp2.email);
 
 		fclose(ptr);
 
@@ -531,7 +532,7 @@ void register_doctor()
 	fwrite(&temp,sizeof(struct doc_id),1,ptr2);
 	fclose(ptr2);
 
-	printf("\nWELCOME NEW USER! YOU ARE NOW LOGGED IN \n");
+	printf("\nWELCOME NEW USER! YOU ARE NOW LOGGED IN !\n");
 
 	FILE* ptr3;
 	char h[100]="doctors/";
@@ -634,9 +635,8 @@ void authenticate_doctor()
 			printf("\nPATIENT HEALTH STATUS : \n");
 			printf("BODY-TEMPERATURE : %lf		BLOOD-PRESSURE : %lf\n\n",temp3.temperature,temp3.bp);
 
-			fclose(ptr);
 
-			printf("\nDO YOU WANT ANY PATIENT TO CONSULT YOU ? (Y/N");
+			/*printf("\nDO YOU WANT THIS PATIENT TO CONSULT YOU ? (Y/N");
 
 			char chois[100];
 			do{
@@ -647,21 +647,47 @@ void authenticate_doctor()
 			if (chois[0]=='Y')
 			{
 				goto nq;
-			}
+			}*/
 
 		} 
+		fclose(ptr);
 	}
 
 	else if (choice[0]=='2')
 	{
 		nq : ;
+		FILE* ptr=fopen(h,"rb");
+		//printf("~~%s\n",h);
+		fseek(ptr,sizeof(struct doctor),SEEK_SET);
 
+		regpat check;
+		while (fread(&check,sizeof(regpat),1,ptr))
+		{
+			if (feof(ptr))break;
+
+			char my[100]="patients/";
+			strcat(my,check.name);
+			strcat(my,".bin");
+			//printf("~~~%s\n",my);
+
+			FILE* ptr2=fopen(my,"rb");
+			fseek(ptr2,0,SEEK_SET);
+
+			patient temp;
+			fread(&temp,sizeof(struct patient),1,ptr2);
+
+			printf("\nPATIENT NAME : %s\n",temp.name);
+			printf("CONTACT THIS PERSON VIA E-MAIL : %s\n\n",temp.email);
+
+			fclose(ptr2);
+		}
+		fclose(ptr);
 
 	}
 
 	else if (choice[0]=='3')
 	{
-		printf("\nYOU HAVE SUCCESSFULLY LOGGED OUT\n\n");
+		printf("\nYOU HAVE SUCCESSFULLY LOGGED OUT !\n\n");
 	}
 	
 }
