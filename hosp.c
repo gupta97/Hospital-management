@@ -41,6 +41,10 @@ typedef struct request{
 	int flag;
 } request;
 
+typedef struct regpat{
+	char name[100];
+} regpat;
+
 void register_patient();
 void authenticate_patient();
 void reg_pat_with_doc(char username[100]);
@@ -288,7 +292,10 @@ void register_patient()
 
 void reg_pat_with_doc(char username[100])
 {
-	printf("\nPLEASE ENTER THE USERNAME OF THE DOCTOR YOU WANT TO REGISTER WITH : \n");
+	regpat my;
+	strcpy(my.name,username);
+
+	printf("\nPLEASE ENTER THE USERNAME OF THE DOCTOR YOU WANT TO REGISTER WITH : ");
 	char inp[100];
 	int flag=0;
 	do{
@@ -327,8 +334,13 @@ void reg_pat_with_doc(char username[100])
 
 	FILE* ptr=fopen(temp,"ab+");
 	fseek(ptr,0,SEEK_END);
-	fwrite(&username,sizeof(char)*100,1,ptr);
+	fwrite(&my,sizeof(regpat),1,ptr);
 	fclose(ptr);
+
+	regpat ddd;
+	fseek(ptr,sizeof(regpat)*-1,SEEK_END);
+	fread(&ddd,sizeof(regpat),1,ptr);
+	printf("~~%s\n",ddd.name);
 
 	char temp2[100]="patients/";
 	strcat(temp2,username);
@@ -336,7 +348,9 @@ void reg_pat_with_doc(char username[100])
 
 	ptr=fopen(temp2,"ab+");
 
-	fwrite(&inp,sizeof(char)*100,1,ptr);
+	regpat my2;
+	strcpy(my2.name,inp);
+	fwrite(&my2,sizeof(regpat),1,ptr);
 	fclose(ptr);
 }
 
@@ -528,6 +542,7 @@ void register_doctor()
 
 	fwrite(&x,sizeof(struct doctor),1,ptr3);
 	fclose(ptr3);
+
 }
 
 void authenticate_doctor()
@@ -536,9 +551,9 @@ void authenticate_doctor()
 	
 	doc_id check;
 	int flag=0;
+	doc_id x;
 
 	do{
-		doc_id x;
 		printf("  USERNAME : ");
 		scanf("%s",x.username);
 		printf("  PASSWORD : ");
@@ -565,6 +580,90 @@ void authenticate_doctor()
 	}while (!flag);
 
 	printf("\nYOU HAVE SUCCESSFULLY LOGGED-IN ! \n");
+
+	printf("\nYOU HAVE THE FOLLOWING CHOICES\n");
+	printf("\n  1. VIEW PATIENT HEALTH STATUS\n  2. ASK PATIENT TO CONSULT\n  3. LOG-OUT\n");
+
+	char choice[10];
+	int flg=1;
+	do{
+		//printf("\n  1. VIEW HEALTH STATUS\n  2. ASK DOCTOR TO CONSULT\n  3. LOG-OUT\n");
+		printf("\nENTER YOUR CHOICE : ");
+		scanf("%s",choice);
+
+		if (strlen(choice)==1 && (choice[0]=='1' || choice[0]=='2' || choice[0]=='3'))
+		{
+			flg=0;break;
+		}
+
+		else 
+		{
+			printf("\nINVALID CHOICE ;\n");
+		}
+	} while (flg);
+
+	char h[100]="doctors/";
+	strcat(h,x.username);
+	strcat(h,".bin");
+
+	if (choice[0]=='1')
+	{
+		FILE* ptr=fopen(h,"rb");
+		fseek(ptr,sizeof(struct doctor),SEEK_SET);
+
+		regpat check;
+		while(fread(&check,sizeof(regpat),1,ptr))
+		{
+			char h2[100]="patients/";
+			strcat(h2,check.name);
+			strcat(h2,".bin");
+			//printf("h2: %s\n",h2);
+
+			FILE* ptr2=fopen(h2,"rb");
+			patient temp2;
+			fseek(ptr2,0,SEEK_SET);
+			fread(&temp2,sizeof(patient),1,ptr2);
+
+			fseek(ptr2,-1*sizeof(status),SEEK_END);
+			status temp3;
+			fread(&temp3,sizeof(status),1,ptr2);
+			fclose(ptr2);
+
+			printf("\nPATIENT NAME : %s\n",temp2.name);
+			printf("\nPATIENT USERNAME : %s\n",temp2.username);
+			printf("\nPATIENT HEALTH STATUS : \n");
+			printf("BODY-TEMPERATURE : %lf		BLOOD-PRESSURE : %lf\n\n",temp3.temperature,temp3.bp);
+
+			fclose(ptr);
+
+			printf("\nDO YOU WANT ANY PATIENT TO CONSULT YOU ? (Y/N");
+
+			char chois[100];
+			do{
+					printf("\nENTER CHOICE : ");
+					scanf("%s",chois);
+			} while (!(strlen(chois)==1 && (choice[0]=='Y' || choice[0]=='N')));	
+
+			if (chois[0]=='Y')
+			{
+				goto nq;
+			}
+
+		} 
+	}
+
+	else if (choice[0]=='2')
+	{
+		nq : ;
+
+
+	}
+
+	else if (choice[0]=='3')
+	{
+		printf("\nYOU HAVE SUCCESSFULLY LOGGED OUT\n\n");
+	}
+	
 }
 
 int main()
@@ -574,23 +673,23 @@ int main()
 	print_doctors();
 	print_patients();
 
-	double choice;
+	char choice[100];
 	do{
 		printf("\nPLEASE ENTER YOUR CHOICE\n");
 		printf("  1. PATIENT (ENTER 1)\n");
 		printf("  2. DOCTOR (ENTER 2)\n");
 		printf("  3. EXIT\n");
 		printf("  ENTER CHOICE : ");
-		scanf("%lf",&choice);
+		scanf("%s",choice);
 		printf("\n");
-	}while(choice!=1 && choice!=2 && choice!=3);
+	}while(!(strlen(choice)==1 &&(choice[0]=='1' || choice[0]=='2' || choice[0]=='3')));
 
-	if (choice==1)
+	if (choice[0]=='1')
 	{
 		init_patient();
 	}
 
-	else if (choice==2)
+	else if (choice[0]=='2')
 	{
 		init_doctor();
 	}
