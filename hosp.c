@@ -278,8 +278,33 @@ void register_patient()
 		doctor temp2;
 		fread(&temp2,sizeof(struct doctor),1,ptr);
 		printf("\nYOUR DOCTOR IS : %s\n",temp2.name);
-		printf("\nYOU CAN CONTACT HIM VIA E-MAIL : %s\n\n",temp2.email);
 
+		printf("\nDO YOU WANT TO MAKE AN APPOINTMENT TO CONSULT : \n");
+
+		char f[100];
+		do
+		{
+			printf("\nENTER CHOICE (Y/N): ");
+			scanf("%s",f);
+		} while (!((strlen(f)==1) && (f[0]=='Y' || f[0]=='N')));
+
+		if (f[0]=='Y')
+		{
+			FILE* ptr2=fopen("req.bin","ab+");
+			fseek(ptr2,0,SEEK_END);
+
+			request temp;
+			strcpy(temp.doc,temp2.username);
+			strcpy(temp.pat,x.username);
+			temp.flag=1;
+
+			fwrite(&temp,sizeof(struct request),1,ptr2);
+
+			fclose(ptr2);
+			printf("\nYOUR REQUEST HAS BEEN REGISTERED\n");
+
+			printf("\nYOU CAN ALSO CONTACT HIM VIA E-MAIL : %s\n\n",temp2.email);
+		}
 		fclose(ptr);
 
 	}
@@ -397,6 +422,33 @@ void authenticate_patient()
 
 	//choices
 
+	FILE* ptrx=fopen("req.bin","rb+");
+
+	request myx;
+	while (fread(&myx,sizeof(struct request),1,ptrx))
+	{
+		FILE* ptry=fopen(h,"rb");
+		patient myy;
+		fread(&myy,sizeof(struct patient),1,ptry);
+		fclose(ptry);
+
+		if (strcmp(myx.pat,myy.username)==0 && myx.flag==-1)
+		{
+			printf("\nYOUR DOCTOR WANTS TO CONSULT YOU\n");
+
+			fseek(ptrx,-1*sizeof(struct request),SEEK_CUR);
+			request myx2;
+			strcpy(myx2.pat,myx.pat);
+			strcpy(myx2.doc,myx.doc);
+			myx2.flag=0;
+			fwrite(&myx2,sizeof(struct request),1,ptrx);
+			fclose(ptrx);
+			break;
+		}
+
+	}
+
+
 	printf("\nCHOOSE FROM THE FOLLOWING SERVICES\n");
 
 	char choice[10];
@@ -449,7 +501,56 @@ void authenticate_patient()
 		doctor temp2;
 		fread(&temp2,sizeof(struct doctor),1,ptr);
 		printf("\nYOUR DOCTOR IS : %s\n",temp2.name);
-		printf("\nYOU CAN CONTACT HIM VIA E-MAIL : %s\n\n",temp2.email);
+
+		printf("\nDO YOU WANT TO MAKE AN APPOINTMENT TO CONSULT : \n");
+
+		char f[100];
+		do
+		{
+			printf("\nENTER CHOICE (Y/N): ");
+			scanf("%s",f);
+		} while (!((strlen(f)==1) && (f[0]=='Y' || f[0]=='N')));
+
+		if (f[0]=='Y')
+		{
+			FILE* ptr2=fopen("req.bin","ab+");
+			fseek(ptr2,0,SEEK_SET);
+
+			request myx;
+			while(fread(&myx,sizeof(request),1,ptr2))
+			{
+				if (strcmp(myx.pat,x.username)==0 && myx.flag==1)
+				{
+					printf("\nYOU HAVE ALREADY MADE A REQUEST! PLEASE WAIT FOR THE DOCTOR TO RESPOND\n");
+					goto MNP;
+				}
+				else if (strcmp(myx.pat,x.username)==0 && myx.flag==0)
+				{
+					myx.flag=1;
+
+					fseek(ptr2,-sizeof(struct request),SEEK_CUR);
+					fwrite(&myx,sizeof(struct request),1,ptr2);
+					goto ADS;
+
+				}
+			}
+
+			request tempx;
+			strcpy(tempx.pat,x.username);
+			strcpy(tempx.pat,temp2.username);
+			tempx.flag=1;
+
+			fseek(ptr2,0,SEEK_END);
+			fwrite(&tempx,sizeof(request),1,ptr2);
+
+			
+			ADS :;printf("\nYOUR REQUEST HAS BEEN REGISTERED\n");
+
+			MNP :;fclose(ptr2);
+			printf("\nYOU CAN ALSO CONTACT HIM VIA E-MAIL : %s\n\n",temp2.email);
+		}
+
+		//printf("\nYOU CAN CONTACT HIM VIA E-MAIL : %s\n\n",temp2.email);
 
 		fclose(ptr);
 
@@ -582,6 +683,25 @@ void authenticate_doctor()
 
 	printf("\nYOU HAVE SUCCESSFULLY LOGGED-IN ! \n");
 
+	FILE* myx=fopen("req.bin","rb+");
+
+	request pz;
+
+	while (fread(&pz,sizeof(struct request),1,myx))
+	{
+		if (strcmp(x.username,pz.doc)==0 && pz.flag==1)
+		{
+			printf("\nYOUR PATIENT %s WANTS TO CONSULT YOU\n",pz.pat);
+
+			fseek(myx,-1*sizeof(struct request),SEEK_CUR);
+
+			pz.flag=0;
+			fwrite(&pz,sizeof(struct request),1,myx);
+		}
+	}
+	fclose(myx);
+
+
 	printf("\nYOU HAVE THE FOLLOWING CHOICES\n");
 	printf("\n  1. VIEW PATIENT HEALTH STATUS\n  2. ASK PATIENT TO CONSULT\n  3. LOG-OUT\n");
 
@@ -655,7 +775,6 @@ void authenticate_doctor()
 
 	else if (choice[0]=='2')
 	{
-		nq : ;
 		FILE* ptr=fopen(h,"rb");
 		//printf("~~%s\n",h);
 		fseek(ptr,sizeof(struct doctor),SEEK_SET);
@@ -675,11 +794,58 @@ void authenticate_doctor()
 
 			patient temp;
 			fread(&temp,sizeof(struct patient),1,ptr2);
+			fclose(ptr2);
 
 			printf("\nPATIENT NAME : %s\n",temp.name);
-			printf("CONTACT THIS PERSON VIA E-MAIL : %s\n\n",temp.email);
 
-			fclose(ptr2);
+			printf("\nDO YOU WANT THIS PATIENT TO CONSULT Y0U : \n");
+
+			char f[100];
+			do
+			{
+				printf("\nENTER CHOICE (Y/N): ");
+				scanf("%s",f);
+			} while (!((strlen(f)==1) && (f[0]=='Y' || f[0]=='N')));
+
+			if (f[0]=='Y')
+			{
+				FILE* ptrx=fopen("req.bin","rb+");
+
+				request myx;
+				while (fread(&myx,sizeof(struct request),1,ptrx))
+				{
+					if (strcmp(temp.username,myx.pat)==0 && strcmp(x.username,myx.doc)==0 && myx.flag==-1)
+					{
+						printf("\nYOU HAVE ALREADY ASKED THIS PATIENT TO CONSULT YOU\n");
+						myx.flag=0;
+						fseek(ptrx,-1*sizeof(struct request),SEEK_CUR);
+						fwrite(&myx,sizeof(struct request),1,ptrx);
+						goto ABC;
+					}
+
+					else if (strcmp(temp.username,myx.pat)==0 && strcmp(x.username,myx.doc)==0 && myx.flag==0)
+					{
+						request zempi=myx;
+						zempi.flag=-1;
+						fseek(ptrx,-1*sizeof(struct request),SEEK_CUR);
+						fwrite(&zempi,sizeof(struct request),1,ptrx);
+						printf("\nYOUR REQUEST HAS BEEN REGISTERED\n\n");
+						goto ABC;
+					}
+
+				}
+				strcpy(myx.pat,temp.username);
+				strcpy(myx.doc,x.username);
+				myx.flag=-1;
+				fseek(ptrx,0,SEEK_END);
+
+				fwrite(&myx,sizeof(struct request),1,ptrx);
+
+
+				ABC : printf("\nYOU CAN ALSO CONTACT THIS PERSON VIA E-MAIL : %s\n\n",temp.email);
+				fclose(ptrx);
+			}
+
 		}
 		fclose(ptr);
 
