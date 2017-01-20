@@ -342,6 +342,7 @@ void register_patient()
 		printf("\n  1. VIEW HEALTH STATUS\n  2. ASK DOCTOR TO CONSULT\n  3. LOG-OUT\n");
 		printf("\n  ENTER YOUR CHOICE : ");
 		gets(choice);
+		if (choice[0]=='\n')gets(choice);
 
 		if (strlen(choice)==1 && (choice[0]=='1' || choice[0]=='2' || choice[0]=='3'))
 		{
@@ -350,7 +351,7 @@ void register_patient()
 
 		else 
 		{
-			printf("\nINVALID CHOICE \n");
+			printf("\n INVALID CHOICE \n");
 		}
 	} while (flg);
 
@@ -386,7 +387,7 @@ void register_patient()
 			age+=((1000*h+100*i+10*j+k)- (1900 + info->tm_year));
 
 		printf("\nYOUR HEALTH STATUS : \n");
-		printf("\n  1. AGE : %d\n  1. BODY TEMPERATURE : %lf\n  2. BLOOD PRESSURE : %lf\n\n",age,temp.temperature,temp.bp);
+		printf("\n  1. AGE : %d\n  1. BODY TEMPERATURE : %lf\n  2. BLOOD PRESSURE : %lf\n\n",-age,temp.temperature,temp.bp);
 	}
 
 	else if (choice[0]=='2')
@@ -446,14 +447,11 @@ void register_patient()
 
 void reg_pat_with_doc(char username[100])
 {
-	regpat my;
-	strcpy(my.name,username);
-
-	printf("\nPLEASE ENTER THE USERNAME OF THE DOCTOR YOU WANT TO REGISTER WITH : ");
+	printf("\nPLEASE ENTER THE USERNAME OF THE DOCTOR YOU WANT TO REGISTER WITH : \n");
 	char inp[100];
 	int flag=0;
 	do{
-		gets(inp);
+		scanf("%s",inp);
 		
 		FILE* ptr=fopen("doctor-log.bin","rb");
 		fseek(ptr,0,SEEK_SET);
@@ -472,30 +470,27 @@ void reg_pat_with_doc(char username[100])
 				break;
 			}
 		}
-		(ptr);
+		fclose(ptr);
 
 		if (flag==0)
 		{
 			printf("\nINVALID USERNAME ENTERED, PLEASE TRY AGAIN\n");
-			printf("\nENTER USER-NAME\n");
+			printf("ENTER USER-NAME\n");
 		}
 	
-		fclose(ptr);
 	} while (!flag);
 
 	char temp[100]="doctors/";
 	strcat(temp,inp);
 	strcat(temp,".bin");
 
+	regpat final;
+	strcpy(final.name,username);	
+
 	FILE* ptr=fopen(temp,"ab+");
 	fseek(ptr,0,SEEK_END);
-	fwrite(&my,sizeof(regpat),1,ptr);
+	fwrite(&final,sizeof(regpat),1,ptr);
 	fclose(ptr);
-
-	regpat ddd;
-	fseek(ptr,sizeof(regpat)*-1,SEEK_END);
-	fread(&ddd,sizeof(regpat),1,ptr);
-	//printf("~~%s\n",ddd.name);
 
 	char temp2[100]="patients/";
 	strcat(temp2,username);
@@ -503,11 +498,11 @@ void reg_pat_with_doc(char username[100])
 
 	ptr=fopen(temp2,"ab+");
 
-	regpat my2;
-	strcpy(my2.name,inp);
-	fwrite(&my2,sizeof(regpat),1,ptr);
+	strcpy(final.name,inp);
+	fwrite(&final,sizeof(regpat),1,ptr);
 	fclose(ptr);
 }
+
 
 void authenticate_patient()
 {
@@ -636,7 +631,7 @@ void authenticate_patient()
 			age+=((1000*h+100*i+10*j+k)- (1900 + info->tm_year));
 
 		printf("\nYOUR HEALTH STATUS : \n");
-		printf("\n  1. AGE : %d\n  1. BODY TEMPERATURE : %lf\n  2. BLOOD PRESSURE : %lf\n\n",age,temp.temperature,temp.bp);
+		printf("\n  1. AGE : %d\n  1. BODY TEMPERATURE : %lf\n  2. BLOOD PRESSURE : %lf\n\n",-age,temp.temperature,temp.bp);
 	}
 
 	else if (choice[0]=='2')
@@ -865,6 +860,7 @@ void register_doctor()
 
 }
 
+
 void authenticate_doctor()
 {
 	printf("\nENTER YOUR USERNAME AND PASSWORD TO LOG-IN : \n");
@@ -943,14 +939,18 @@ void authenticate_doctor()
 		}
 	} while (flg);
 
+	//printf("~~\n");
+
 	char h[100]="doctors/";
 	strcat(h,x.username);
 	strcat(h,".bin");
 
 	if (choice[0]=='1')
 	{
-		FILE* ptr=fopen(h,"rb");
+		FILE* ptr=fopen(h,"rb+");
 		fseek(ptr,sizeof(struct doctor),SEEK_SET);
+
+		//printf("~n\n");
 
 		regpat check;
 		while(fread(&check,sizeof(regpat),1,ptr))
@@ -958,7 +958,7 @@ void authenticate_doctor()
 			char h2[100]="patients/";
 			strcat(h2,check.name);
 			strcat(h2,".bin");
-			//printf("h2: %s\n",h2);
+			printf("h2: %s\n",h2);
 
 			FILE* ptr2=fopen(h2,"rb");
 			patient temp2;
@@ -993,7 +993,7 @@ void authenticate_doctor()
 
 			printf("\nPATIENT NAME : %s\n",temp2.name);
 			printf("\nPATIENT USERNAME : %s\n",temp2.username);
-			printf("\nPATIENT AGE : %d\n",age);
+			printf("\nPATIENT AGE : %d\n",-age);
 			printf("\nPATIENT HEALTH STATUS : \n");
 			printf("BODY-TEMPERATURE : %lf		BLOOD-PRESSURE : %lf\n\n",temp3.temperature,temp3.bp);
 
@@ -1099,7 +1099,7 @@ void authenticate_doctor()
 		printf("\nYOU HAVE SUCCESSFULLY LOGGED OUT !\n\n");
 	}
 	
-}
+}	
 
 int main()
 {
