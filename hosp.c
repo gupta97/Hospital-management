@@ -453,35 +453,36 @@ void reg_pat_with_doc(char username[100])
 	char inp[100];
 	int flag=0;
 	do{
-		gets(inp);
-		
-		FILE* ptr=fopen("doctor-log.bin","rb");
+		flag=0;
+		scanf("%s",inp);
+		//printf("hi\n");
+		FILE* ptr=fopen("doctor-log.bin","rb+");
+		//printf("hi\n");
+
 		fseek(ptr,0,SEEK_SET);
 		doc_id temp;
-		while (1)
+		while (fread(&temp,sizeof(doc_id),1,ptr))
 		{
-			fread(&temp,sizeof(doc_id),1,ptr);
-			if (feof(ptr))break;
-
-			fseek(ptr,-1*sizeof(doc_id),SEEK_CUR);
-			fread(&temp,sizeof(doc_id),1,ptr);
-
+			//printf("~");
 			if (strcmp(temp.username,inp)==0)
 			{
 				flag=1;
 				break;
 			}
 		}
-		(ptr);
+
+		//printf("check\n");
 
 		if (flag==0)
 		{
 			printf("\nINVALID USERNAME ENTERED, PLEASE TRY AGAIN\n");
-			printf("\nENTER USER-NAME\n");
+			printf("\nENTER USER-NAME : ");
 		}
 	
 		fclose(ptr);
-	} while (!flag);
+	} while (1);
+
+	printf("~~~~");
 
 	char temp[100]="doctors/";
 	strcat(temp,inp);
@@ -495,7 +496,7 @@ void reg_pat_with_doc(char username[100])
 	regpat ddd;
 	fseek(ptr,sizeof(regpat)*-1,SEEK_END);
 	fread(&ddd,sizeof(regpat),1,ptr);
-	//printf("~~%s\n",ddd.name);
+	printf("~~%s\n",ddd.name);
 
 	char temp2[100]="patients/";
 	strcat(temp2,username);
