@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 //patient file : patient struct + doctor under whom registered + health status
 //doctors file : doctor struct + patients under doctor
@@ -52,9 +53,10 @@ void reg_pat_with_doc(char username[100]);
 void print_doctors()
 {
 	printf("\nLIST OF REGISTERED DOCTORS : \n");
-	FILE* ptr=fopen("doctor-log.bin","rb");
+	FILE* ptr=fopen("doctor-log.bin","ab+");
 	fseek(ptr,0,SEEK_SET);
 	doc_id temp;
+	printf("\n");
 	while (1)
 	{
 		fread(&temp,sizeof(doc_id),1,ptr);
@@ -72,9 +74,10 @@ void print_doctors()
 void print_patients()
 {
 	printf("\nLIST OF REGISTERED PATIENTS : \n");
-	FILE* ptr=fopen("patient-log.bin","rb");
+	FILE* ptr=fopen("patient-log.bin","ab+");
 	fseek(ptr,0,SEEK_SET);
 	pat_id temp;
+	printf("\n");
 	while (1)
 	{
 		fread(&temp,sizeof(pat_id),1,ptr);
@@ -91,23 +94,23 @@ void print_patients()
 
 void init_patient()
 {
-	char x;
+	char x[100];
 	
 	do{
 		printf("\nARE YOU A REGISTERED PATIENT (Y/N) : ");
-		scanf(" %c",&x);
-	}while (x!='Y' && x!='N');
+		gets(x);
 
-	if (x=='N')
+	}while (!((x[0]=='Y' || x[0]=='N') && strlen(x)==1));
+
+	if (x[0]=='N')
 	{
 		register_patient();
 	}
-	else if (x=='Y')
+	else if (x[0]=='Y')
 	{
 		authenticate_patient();
 	}
 }
-
 void register_patient()
 {
 	FILE* fp=fopen("doctor-log.bin","rb");
@@ -126,16 +129,116 @@ void register_patient()
 	do{
 		flag=0;
 		printf("\nPLEASE ENTER YOUR PERSONAL DETAILS -\n");
-		printf("  1. FIRST NAME : ");
-		scanf("%s",x.name);
-		printf("  2. USERNAME : ");
-		scanf("%s",x.username);
-		printf("  3. PASSWORD : ");
-		scanf("%s",x.password);
-		printf("  4. EMAIL-ID : ");
-		scanf("%s",x.email);
-		printf("  5. DOB (dd-mm-yyyy) : ");
-		scanf("%s",x.DOB);
+		printf("\n  1. FIRST NAME : ");
+		
+		int flag=0;
+		do{
+			flag=0;
+			gets(x.name);
+			for (int i=0;i<strlen(x.name);i++)
+			{
+				if (x.name[i]==' ')
+				{
+					printf("\n  THERE SHOULDN'T BE ANY SPACE CHARCATERS IN THE FIRST NAME\n");
+					printf("  ENTER YOUR FIRST NAME AGAIN : ");
+					flag=1;
+					break;
+				}
+			}
+		} while (flag);
+
+
+		printf("\n\n  2. USERNAME : ");
+		//scanf("%s",x.username);
+		
+		do{
+			flag=0;
+			gets(x.username);
+			for (int i=0;i<strlen(x.username);i++)
+			{
+				if (x.username[i]==' ')
+				{
+					printf("\n  THERE SHOULDN'T BE ANY SPACE CHARCATERS IN THE USER NAME\n");
+					printf("  ENTER YOUR USER NAME AGAIN : ");
+					flag=1;
+					break;
+				}
+			}
+		} while (flag);
+
+
+		printf("\n\n  3. PASSWORD : ");
+		gets(x.password);
+
+		printf("\n\n  4. EMAIL-ID : ");
+		//scanf("%s",x.email);
+
+		flag=1;
+		do{
+			flag=1;
+			gets(x.email);
+			for (int i=0;i<strlen(x.email);i++)
+			{
+				if (x.email[i]=='@')
+				{
+					flag=0;
+				}
+			}
+
+			if (flag==1)
+			{
+				printf("\n  THIS IS NOT A VALID E-MAIL ADDRESS\n");
+				printf("  ENTER YOUR EMAIL ID AGAIN : ");
+			}
+
+		} while (flag);
+
+
+		printf("\n\n  5. DOB (dd-mm-yyyy) : ");
+		
+		do
+		{
+			flag=0;
+			gets(x.DOB);
+
+			if (strlen(x.DOB)!=10 || x.DOB[2]!='-' || x.DOB[5]!='-')
+			{
+				flag=1;
+			}
+
+			int h = (int)(x.DOB[0]-'0');
+			int i = (int)(x.DOB[1]-'0');
+
+			if (h>3 || h<0 || i>10 || i<0 || ((10*h+i)>31))flag=1;
+
+			h = (int)(x.DOB[3]-'0');
+			i = (int)(x.DOB[4]-'0');
+
+			if (h<0 || h>1 || i<0 || i>9 || (10*h+i)<0 || (10*h+i)>12)flag=1;
+
+			h = (int)(x.DOB[6]-'0');
+			i = (int)(x.DOB[7]-'0');
+			int j = (int)(x.DOB[8]-'0');
+			int k = (int)(x.DOB[9]-'0');
+
+			//struct tm *localtime(const time_t *timer)
+			time_t rawtime;
+			struct tm *info;
+		    //char buffer[80];
+
+		    time( &rawtime );
+
+			info = localtime( &rawtime );
+
+			if (h<0 || h>2 || i<0 || i>9 || j<0 || j>9 || k<0 || k>9 || ((1000*h+100*i+10*j+k)>= 1900 + info->tm_year ))flag=1;
+
+			if (flag==1)
+			{
+				printf("\n  DOB ENTERED IS WRONG/IS IN WRONG FORMAT\n");
+				printf("  ENTER DOB AGAIN : ");
+			}
+ 
+		} while (flag);
 
 				FILE *ptr;
 				ptr=fopen("patient-log.bin","ab+");
@@ -218,8 +321,13 @@ void register_patient()
 	//ENTER HEALTH STATUS
 	printf("\nENTER YOUR CURRENT HEALTH STATUS\n\n1. BODY-TEMPERATURE (fahrenheit) : ");
 	scanf("%lf",&val.temperature);
+////
+
+
 	printf("\n2. BLOOD PRESSURE (mm) : ");
 	scanf("%lf",&val.bp);
+////
+
 
 	fseek(ptr,0,SEEK_END);
 	fwrite(&val,sizeof(struct status),1,ptr);
@@ -232,8 +340,8 @@ void register_patient()
 	int flg=1;
 	do{
 		printf("\n  1. VIEW HEALTH STATUS\n  2. ASK DOCTOR TO CONSULT\n  3. LOG-OUT\n");
-		printf("\nENTER YOUR CHOICE : ");
-		scanf("%s",choice);
+		printf("\n  ENTER YOUR CHOICE : ");
+		gets(choice);
 
 		if (strlen(choice)==1 && (choice[0]=='1' || choice[0]=='2' || choice[0]=='3'))
 		{
@@ -242,7 +350,7 @@ void register_patient()
 
 		else 
 		{
-			printf("\nINVALID CHOICE ;\n");
+			printf("\nINVALID CHOICE \n");
 		}
 	} while (flg);
 
@@ -256,8 +364,29 @@ void register_patient()
 		fread(&temp,sizeof(status),1,ptr);
 		fclose(ptr);
 
+		//struct tm *localtime(const time_t *timer)
+			time_t rawtime;
+			struct tm *info;
+		    //char buffer[80];
+
+		    time( &rawtime );
+
+			info = localtime( &rawtime );
+
+			int h = (int)(x.DOB[3]-'0');
+			int i = (int)(x.DOB[4]-'0');
+
+			int age= ((info->tm_mon+1-(10*h+i))>0)?0:1;
+
+			h = (int)(x.DOB[6]-'0');
+			i = (int)(x.DOB[7]-'0');
+			int j = (int)(x.DOB[8]-'0');
+			int k = (int)(x.DOB[9]-'0');
+
+			age+=((1000*h+100*i+10*j+k)- (1900 + info->tm_year));
+
 		printf("\nYOUR HEALTH STATUS : \n");
-		printf("\n  1. BODY TEMPERATURE : %lf\n  2. BLOOD PRESSURE : %lf\n\n",temp.temperature,temp.bp);
+		printf("\n  1. AGE : %d\n  1. BODY TEMPERATURE : %lf\n  2. BLOOD PRESSURE : %lf\n\n",age,temp.temperature,temp.bp);
 	}
 
 	else if (choice[0]=='2')
@@ -290,7 +419,7 @@ void register_patient()
 
 		if (f[0]=='Y')
 		{
-			FILE* ptr2=fopen("req.bin","ab+");
+			FILE* ptr2=fopen("req.bin","rb+");
 			fseek(ptr2,0,SEEK_END);
 
 			request temp;
@@ -303,7 +432,7 @@ void register_patient()
 			fclose(ptr2);
 			printf("\nYOUR REQUEST HAS BEEN REGISTERED\n");
 
-			printf("\nYOU CAN ALSO CONTACT HIM VIA E-MAIL : %s\n\n",temp2.email);
+			printf("\nYOU CAN ALSO CONTACT HIM/HER VIA E-MAIL : %s\n\n",temp2.email);
 		}
 		fclose(ptr);
 
@@ -311,7 +440,7 @@ void register_patient()
 
 	else if (choice[0]=='3')
 	{
-		printf("\nYOU HAVE SUCCESSFULLY LOGGED-IN OUT!\n\n");
+		printf("\nYOU HAVE SUCCESSFULLY LOGGED OUT!\n\n");
 	}
 }
 
@@ -324,7 +453,7 @@ void reg_pat_with_doc(char username[100])
 	char inp[100];
 	int flag=0;
 	do{
-		scanf("%s",inp);
+		gets(inp);
 		
 		FILE* ptr=fopen("doctor-log.bin","rb");
 		fseek(ptr,0,SEEK_SET);
@@ -390,9 +519,9 @@ void authenticate_patient()
 
 	do{
 		printf("  USERNAME : ");
-		scanf("%s",x.username);
+		gets(x.username);
 		printf("  PASSWORD : ");
-		scanf("%s",x.password);
+		gets(x.password);
 
 		FILE* ptr;
 		ptr=fopen("patient-log.bin","rb");
@@ -423,6 +552,7 @@ void authenticate_patient()
 	//choices
 
 	FILE* ptrx=fopen("req.bin","rb+");
+	fseek(ptrx,0,SEEK_SET);
 
 	request myx;
 	while (fread(&myx,sizeof(struct request),1,ptrx))
@@ -434,7 +564,7 @@ void authenticate_patient()
 
 		if (strcmp(myx.pat,myy.username)==0 && myx.flag==-1)
 		{
-			printf("\nYOUR DOCTOR WANTS TO CONSULT YOU\n");
+			printf("\nYOUR DOCTOR ( DR. %s ) WANTS TO CONSULT YOU\n",myx.doc);
 
 			fseek(ptrx,-1*sizeof(struct request),SEEK_CUR);
 			request myx2;
@@ -472,6 +602,11 @@ void authenticate_patient()
 	if (choice[0]=='1')
 	{
 		FILE* ptr=fopen(h,"rb");
+
+		patient zz;
+		fseek(ptr,0,SEEK_SET);
+		fread(&zz,sizeof(patient),1,ptr);
+
 		fseek(ptr,0,SEEK_END);
 		fseek(ptr,-1*sizeof(status),SEEK_CUR);
 
@@ -479,8 +614,29 @@ void authenticate_patient()
 		fread(&temp,sizeof(status),1,ptr);
 		fclose(ptr);
 
+		//struct tm *localtime(const time_t *timer)
+			time_t rawtime;
+			struct tm *info;
+		    //char buffer[80];
+
+		    time( &rawtime );
+
+			info = localtime( &rawtime );
+
+			int h = (int)(zz.DOB[3]-'0');
+			int i = (int)(zz.DOB[4]-'0');
+
+			int age= ((info->tm_mon+1-(10*h+i))>0)?0:1;
+
+			h = (int)(zz.DOB[6]-'0');
+			i = (int)(zz.DOB[7]-'0');
+			int j = (int)(zz.DOB[8]-'0');
+			int k = (int)(zz.DOB[9]-'0');
+
+			age+=((1000*h+100*i+10*j+k)- (1900 + info->tm_year));
+
 		printf("\nYOUR HEALTH STATUS : \n");
-		printf("\n  1. BODY TEMPERATURE : %lf\n  2. BLOOD PRESSURE : %lf\n\n",temp.temperature,temp.bp);
+		printf("\n  1. AGE : %d\n  1. BODY TEMPERATURE : %lf\n  2. BLOOD PRESSURE : %lf\n\n",age,temp.temperature,temp.bp);
 	}
 
 	else if (choice[0]=='2')
@@ -489,7 +645,7 @@ void authenticate_patient()
 		fseek(ptr,sizeof(struct patient),SEEK_SET);
 		char temp[100];
 		fread(&temp,sizeof(char)*100,1,ptr);
-		printf("%s\n",temp);
+		//printf("%s\n",temp);
 
 		char my[100]="doctors/";
 		strcat(my,temp);
@@ -513,7 +669,7 @@ void authenticate_patient()
 
 		if (f[0]=='Y')
 		{
-			FILE* ptr2=fopen("req.bin","ab+");
+			FILE* ptr2=fopen("req.bin","rb+");
 			fseek(ptr2,0,SEEK_SET);
 
 			request myx;
@@ -526,10 +682,13 @@ void authenticate_patient()
 				}
 				else if (strcmp(myx.pat,x.username)==0 && myx.flag==0)
 				{
-					myx.flag=1;
-
-					fseek(ptr2,-sizeof(struct request),SEEK_CUR);
-					fwrite(&myx,sizeof(struct request),1,ptr2);
+					request tempxx;
+					strcpy(tempxx.pat,x.username);
+					strcpy(tempxx.doc,temp2.username);
+					tempxx.flag=1;
+					//printf("~~~~hi\n");
+					fseek(ptr2,-1*sizeof(struct request),SEEK_CUR);
+					fwrite(&tempxx,sizeof(struct request),1,ptr2);
 					goto ADS;
 
 				}
@@ -537,7 +696,7 @@ void authenticate_patient()
 
 			request tempx;
 			strcpy(tempx.pat,x.username);
-			strcpy(tempx.pat,temp2.username);
+			strcpy(tempx.doc,temp2.username);
 			tempx.flag=1;
 
 			fseek(ptr2,0,SEEK_END);
@@ -567,18 +726,19 @@ void register_doctor();
 void authenticate_doctor();
 void init_doctor()
 {
-	char x;
+	char x[100];
 	
 	do{
 		printf("\nARE YOU A REGISTERED DOCTOR (Y/N) : ");
-		scanf(" %c",&x);
-	}while (x!='Y' && x!='N');
+		gets(x);
 
-	if (x=='N')
+	}while (!((x[0]=='Y' || x[0]=='N') && strlen(x)==1));
+
+	if (x[0]=='N')
 	{
 		register_doctor();
 	}
-	else if (x=='Y')
+	else if (x[0]=='Y')
 	{
 		authenticate_doctor();
 	}
@@ -586,20 +746,77 @@ void init_doctor()
 
 void register_doctor()
 {
-	int flag=0;
+	int flg=0;
 	doctor x;
 
 	do{
-		flag=0;
+		int flag=0;
 		printf("\nPLEASE ENTER YOUR PERSONAL DETAILS -\n");
 		printf("  1. FIRST NAME : ");
-		scanf("%s",x.name);
-		printf("  2. USERNAME : ");
-		scanf("%s",x.username);
-		printf("  3. PASSWORD : ");
-		scanf("%s",x.password);
-		printf("  4. EMAIL-ID : ");
-		scanf("%s",x.email);
+		//scanf("%s",x.name);
+
+	
+		do{
+			flag=0;
+			gets(x.name);
+			for (int i=0;i<strlen(x.name);i++)
+			{
+				if (x.name[i]==' ')
+				{
+					printf("\n  THERE SHOULDN'T BE ANY SPACE CHARCATERS IN THE FIRST NAME\n");
+					printf("  ENTER YOUR FIRST NAME AGAIN : ");
+					flag=1;
+					break;
+				}
+			}
+		} while (flag);
+
+		printf("\n\n  2. USERNAME : ");
+		//scanf("%s",x.username);
+
+		flag=0;
+		do{
+			flag=0;
+			gets(x.username);
+			for (int i=0;i<strlen(x.username);i++)
+			{
+				if (x.username[i]==' ')
+				{
+					printf("\n  THERE SHOULDN'T BE ANY SPACE CHARCATERS IN THE USER NAME\n");
+					printf("  ENTER YOUR USER NAME AGAIN : ");
+					flag=1;
+					break;
+				}
+			}
+		} while (flag);
+
+
+		printf("\n\n  3. PASSWORD : ");
+		gets(x.password);
+
+
+		printf("\n\n  4. EMAIL-ID : ");
+
+		flag=1;
+		do{
+			flag=1;
+			gets(x.email);
+			for (int i=0;i<strlen(x.email);i++)
+			{
+				if (x.email[i]=='@')
+				{
+					flag=0;
+				}
+			}
+
+			if (flag==1)
+			{
+				printf("\n  THIS IS NOT A VALID E-MAIL ADDRESS\n");
+				printf("  ENTER YOUR EMAIL ID AGAIN : ");
+			}
+
+		} while (flag);
+
 
 				FILE *ptr;
 				ptr=fopen("doctor-log.bin","ab+");
@@ -616,14 +833,15 @@ void register_doctor()
 					if (strcmp(check.username,x.username)==0)
 					{
 						printf("\nTHE USERNAME ALREADY EXISTS, PLEASE SELECT SOME OTHER USERNAME.\n\n");
-						flag=1;
+						flg=1;
 						break;
 					}
 					
 				}
 				fclose(ptr);
-	}while(flag);
+	}while(flg);
 
+	//int flag;
 	FILE* ptr2;
 	ptr2=fopen("doctor-log.bin","ab+");
 	doc_id temp;
@@ -633,7 +851,7 @@ void register_doctor()
 	fwrite(&temp,sizeof(struct doc_id),1,ptr2);
 	fclose(ptr2);
 
-	printf("\nWELCOME NEW USER! YOU ARE NOW LOGGED IN !\n");
+	printf("\nWELCOME NEW USER! YOU HAVE REGISTERED SUCCESSFULLY !\n");
 
 	FILE* ptr3;
 	char h[100]="doctors/";
@@ -684,11 +902,13 @@ void authenticate_doctor()
 	printf("\nYOU HAVE SUCCESSFULLY LOGGED-IN ! \n");
 
 	FILE* myx=fopen("req.bin","rb+");
+	fseek(myx,0,SEEK_SET);
 
 	request pz;
 
 	while (fread(&pz,sizeof(struct request),1,myx))
 	{
+		//printf("~~hi\n");
 		if (strcmp(x.username,pz.doc)==0 && pz.flag==1)
 		{
 			printf("\nYOUR PATIENT %s WANTS TO CONSULT YOU\n",pz.pat);
@@ -750,8 +970,30 @@ void authenticate_doctor()
 			fread(&temp3,sizeof(status),1,ptr2);
 			fclose(ptr2);
 
+			//struct tm *localtime(const time_t *timer)
+			time_t rawtime;
+			struct tm *info;
+		    //char buffer[80];
+
+		    time( &rawtime );
+
+			info = localtime( &rawtime );
+
+			int h = (int)(temp2.DOB[3]-'0');
+			int i = (int)(temp2.DOB[4]-'0');
+
+			int age= ((info->tm_mon+1-(10*h+i))>0)?0:1;
+
+			h = (int)(temp2.DOB[6]-'0');
+			i = (int)(temp2.DOB[7]-'0');
+			int j = (int)(temp2.DOB[8]-'0');
+			int k = (int)(temp2.DOB[9]-'0');
+
+			age+=((1000*h+100*i+10*j+k)- (1900 + info->tm_year));
+
 			printf("\nPATIENT NAME : %s\n",temp2.name);
 			printf("\nPATIENT USERNAME : %s\n",temp2.username);
+			printf("\nPATIENT AGE : %d\n",age);
 			printf("\nPATIENT HEALTH STATUS : \n");
 			printf("BODY-TEMPERATURE : %lf		BLOOD-PRESSURE : %lf\n\n",temp3.temperature,temp3.bp);
 
@@ -810,6 +1052,7 @@ void authenticate_doctor()
 			if (f[0]=='Y')
 			{
 				FILE* ptrx=fopen("req.bin","rb+");
+				fseek(ptrx,0,SEEK_SET);
 
 				request myx;
 				while (fread(&myx,sizeof(struct request),1,ptrx))
@@ -862,19 +1105,37 @@ int main()
 {
 	printf("HI!\nWELCOME TO THE ONLINE PATIENT MONITORING SYSTEM\n\n");
 
+	time_t rawtime;
+   	struct tm *info;
+   	char buffer[80];
+
+   	time( &rawtime );
+
+   	info = localtime( &rawtime );
+   	printf("Current local time and date: %s", asctime(info));
 	print_doctors();
 	print_patients();
 
+	FILE* ptr=fopen("req.bin","ab+");
+	fclose(ptr);
+
 	char choice[100];
 	do{
+		strcpy(choice,"");
 		printf("\nPLEASE ENTER YOUR CHOICE\n");
 		printf("  1. PATIENT (ENTER 1)\n");
 		printf("  2. DOCTOR (ENTER 2)\n");
 		printf("  3. EXIT\n");
 		printf("  ENTER CHOICE : ");
-		scanf("%s",choice);
+		//scanf("%s",choice);
+		gets(choice);
+		if (strlen(choice)==1 &&(choice[0]=='1' || choice[0]=='2' || choice[0]=='3'))
+		{
+			break;
+		}
+
 		printf("\n");
-	}while(!(strlen(choice)==1 &&(choice[0]=='1' || choice[0]=='2' || choice[0]=='3')));
+	}while(1);
 
 	if (choice[0]=='1')
 	{
